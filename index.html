@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestor de Conteúdos — Reaproveitamento v4</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue:#0079CE; --blue-hover:#0460A1; --blue-light:#CCEAFF; --blue-border:#3B9BDE;
+  --green:#12B262; --green-light:#CCFFE6; --green-border:#3CCC84; --green-text:#0C7742;
+  --yellow:#FFAA00; --yellow-light:#FFEECC; --yellow-border:#FFC144; --yellow-text:#A05100;
+  --red:#D92F20; --red-light:#FFD0CC; --red-border:#F87171; --red-text:#A10E00;
+  --gray-50:#F8FAFC; --gray-100:#F1F5F9; --gray-200:#E2E8F0; --gray-300:#CBD5E1;
+  --gray-400:#94A3B8; --gray-500:#64748B; --gray-600:#475569; --gray-700:#334155;
+  --gray-800:#1E293B; --gray-900:#0F172A;
+  --text-primary:#1E293B; --text-secondary:#64748B; --text-muted:#94A3B8;
+  --bg:#F8FAFC; --surface:#FFFFFF; --border:#E2E8F0;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:12px; --radius-xl:16px; --radius-pill:999px;
+  --shadow-xs:0 1px 2px rgba(0,0,0,.06); --shadow-sm:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06);
+  --font:'Inter',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text-primary);font-size:14px;line-height:1.5;height:100vh;overflow:hidden}
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:216px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-top{padding:16px;border-bottom:1px solid var(--border)}
+.sidebar-brand{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--text-primary)}
+.brand-mark{width:28px;height:28px;border-radius:8px;background:var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nav-section{padding:16px 12px 6px;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-muted)}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 12px;margin:1px 4px;border-radius:var(--radius-md);font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;transition:all .12s}
+.nav-item:hover{background:var(--gray-100);color:var(--text-primary)}
+.nav-item.active{background:var(--blue-light);color:var(--blue)}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.sidebar-bottom{margin-top:auto;padding:12px;border-top:1px solid var(--border)}
+.user-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary)}
+.user-av{width:24px;height:24px;border-radius:50%;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--blue);flex-shrink:0}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)}
+.bc-link{color:var(--blue);cursor:pointer}.bc-link:hover{text-decoration:underline}
+.bc-sep{color:var(--gray-300)}
+.topbar-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
+
+/* ANO SWITCHER — destaque elevado */
+.year-switcher-wrap{display:flex;align-items:center;gap:8px}
+.year-label-hint{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px}
+.year-switcher{display:flex;align-items:center;background:var(--gray-100);border:1.5px solid var(--border);border-radius:var(--radius-md);overflow:hidden}
+.year-opt{padding:5px 16px;font-size:12px;font-weight:600;color:var(--text-secondary);cursor:pointer;transition:all .12s;white-space:nowrap}
+.year-opt:hover{background:var(--gray-200);color:var(--text-primary)}
+.year-opt.active{background:var(--blue);color:#fff}
+.year-context{font-size:11px;color:var(--text-muted);font-style:italic}
+
+/* PAGE */
+.page{flex:1;overflow-y:auto}
+.view{display:none}.view.active{display:block}
+.page-inner{padding:32px}
+
+/* TABS */
+.tabs-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;flex-shrink:0;display:flex;align-items:center}
+.tab{padding:14px 16px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.tab:hover{color:var(--text-primary)}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-new{font-size:10px;font-weight:700;background:var(--blue);color:#fff;padding:2px 6px;border-radius:var(--radius-pill);letter-spacing:.3px}
+
+/* PAGE HEADER */
+.page-header{margin-bottom:24px}
+.page-title{font-size:22px;font-weight:700;color:var(--text-primary);letter-spacing:-.3px;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--text-secondary)}
+
+/* BANNER */
+.banner{background:var(--blue-light);border:1px solid var(--blue-border);border-radius:var(--radius-lg);padding:16px 20px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px}
+.banner-icon{width:32px;height:32px;border-radius:50%;background:rgba(0,121,206,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.banner-body{flex:1}
+.banner-title{font-size:14px;font-weight:600;color:var(--blue-hover);margin-bottom:3px}
+.banner-text{font-size:13px;color:#2563A8;line-height:1.5}
+.banner-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-top:2px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;font-family:var(--font);font-size:13px;font-weight:500;padding:7px 14px;border-radius:var(--radius-md);cursor:pointer;border:none;transition:all .12s;white-space:nowrap;text-decoration:none}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue-hover)}
+.btn-secondary{background:var(--surface);color:var(--text-primary);border:1px solid var(--gray-300)}.btn-secondary:hover{background:var(--gray-100)}
+.btn-ghost{background:none;color:var(--text-secondary);border:1px solid transparent;padding:6px}.btn-ghost:hover{background:var(--gray-100);color:var(--text-primary)}
+.btn-danger-ghost{background:none;color:var(--red-text);border:1px solid transparent;padding:6px 8px;font-size:12px}.btn-danger-ghost:hover{background:var(--red-light)}
+.btn-sm{font-size:12px;padding:5px 10px}
+.btn-xs{font-size:11px;padding:3px 8px}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:var(--radius-pill);white-space:nowrap}
+.badge-success{background:var(--green-light);color:var(--green-text)}
+.badge-warning{background:var(--yellow-light);color:var(--yellow-text)}
+.badge-danger{background:var(--red-light);color:var(--red-text)}
+.badge-info{background:var(--blue-light);color:var(--blue-hover)}
+.badge-neutral{background:var(--gray-100);color:var(--gray-600)}
+.badge-partial{background:#FFF3E0;color:#8B4400}
+.badge-alta{background:var(--green-light);color:var(--green-text)}
+.badge-media{background:var(--yellow-light);color:var(--yellow-text)}
+.badge-sem{background:var(--red-light);color:var(--red-text)}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:20px}
+.card-sm{padding:16px}
+
+/* SECTION HEADER */
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+.section-title{font-size:16px;font-weight:700;color:var(--text-primary)}
+.section-meta{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted)}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:20px 0}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--text-secondary);padding:10px 12px;background:var(--gray-50);border-bottom:1px solid var(--border);text-align:left}
+.tbl td{padding:12px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr.clickable{cursor:pointer;transition:background .1s}.tbl tr.clickable:hover td{background:var(--gray-50)}
+.tbl-wrap{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+
+/* STEPPER */
+.stepper{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 24px;display:flex;align-items:center;margin-bottom:24px}
+.step{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:var(--text-muted)}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:var(--gray-200);color:var(--gray-500);flex-shrink:0;transition:all .2s}
+.step.active .step-dot{background:var(--blue);color:#fff}
+.step.active{color:var(--text-primary)}
+.step.done .step-dot{background:var(--green-light);color:var(--green-text)}
+.step.done{color:var(--text-secondary)}
+.step-line{flex:1;height:2px;background:var(--gray-200);margin:0 12px}
+.step-line.done{background:var(--green)}
+
+/* GRID */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* STAT BIG */
+.stat-big{padding:20px 24px;border-radius:var(--radius-lg)}
+.stat-big-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.stat-big-num{font-size:36px;font-weight:700;letter-spacing:-1px;line-height:1}
+.stat-big-sub{font-size:12px;margin-top:6px}
+
+/* PROG BAR TRICOLOR */
+.prog-tri{height:12px;border-radius:var(--radius-pill);overflow:hidden;display:flex;margin:12px 0}
+.prog-green{background:var(--green)}
+.prog-yellow{background:var(--yellow)}
+.prog-red{background:var(--red)}
+.prog-legend{display:flex;gap:20px;flex-wrap:wrap}
+.prog-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.prog-leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary)}
+
+/* MINI PROGRESS */
+.mini-prog-wrap{display:flex;align-items:center;gap:8px}
+.mini-prog-track{height:6px;border-radius:var(--radius-pill);background:var(--gray-200);overflow:hidden;flex:1}
+.mini-prog-fill{height:100%;border-radius:var(--radius-pill);background:var(--green)}
+.mini-pct{font-size:12px;font-weight:600;color:var(--text-secondary);width:36px;text-align:right;flex-shrink:0}
+
+/* COLEÇÃO CARD (aba reaproveitamento) */
+.col-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;transition:box-shadow .15s,border-color .15s;position:relative}
+.col-card:hover{box-shadow:var(--shadow-sm);border-color:var(--gray-300)}
+.col-card.selected{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,121,206,.1)}
+.col-card-check{position:absolute;top:14px;right:14px;width:18px;height:18px;border-radius:4px;border:1.5px solid var(--gray-300);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s;background:var(--surface)}
+.col-card.selected .col-card-check{background:var(--blue);border-color:var(--blue)}
+.col-card-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;padding-right:28px}
+.col-card-icon{width:36px;height:36px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.col-card-name{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:3px}
+.col-card-year{font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:4px}
+.col-card-prog{margin-bottom:12px}
+.col-card-prog-label{display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px}
+.col-card-prog-name{color:var(--text-secondary)}
+.col-card-prog-val{font-weight:600;color:var(--text-primary)}
+.col-card-footer{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border)}
+.col-code{font-size:10px;font-weight:700;font-family:'Courier New',monospace;background:var(--gray-100);color:var(--gray-600);padding:2px 6px;border-radius:4px;border:1px solid var(--border)}
+
+/* CHIPS DE TIPO */
+.tipo-grid{display:flex;flex-wrap:wrap;gap:8px}
+.tipo-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius-md);font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;transition:all .12s;user-select:none}
+.tipo-chip:hover{border-color:var(--gray-400);color:var(--text-primary)}
+.tipo-chip.on{background:var(--blue-light);border-color:var(--blue);color:var(--blue-hover)}
+.chip-box{width:16px;height:16px;border-radius:4px;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:.6}
+.tipo-chip.on .chip-box{background:var(--blue);border-color:var(--blue);opacity:1}
+
+/* TABELA DISCIPLINAS */
+.disc-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.disc-row:last-child{border-bottom:none}
+.disc-name{font-size:13px;font-weight:600;width:180px;flex-shrink:0}
+.disc-serie{font-size:11px;color:var(--text-muted);font-weight:400;display:block}
+.disc-bar-wrap{flex:1;min-width:0}
+.disc-bar{height:7px;border-radius:var(--radius-pill);background:var(--gray-200);overflow:hidden;margin-bottom:4px}
+.disc-bar-fill{height:100%;border-radius:var(--radius-pill);background:var(--green)}
+.disc-bar-fill.partial{background:linear-gradient(90deg,var(--green) var(--ok),var(--red) var(--ok))}
+.disc-nums{font-size:11px;color:var(--text-muted)}
+.disc-pct{font-size:13px;font-weight:700;width:44px;text-align:right;flex-shrink:0}
+.disc-orphan-count{font-size:12px;width:110px;text-align:right;flex-shrink:0;color:var(--red-text);font-weight:500}
+
+/* ORFÃO COLLAPSE */
+.orf-group{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:8px}
+.orf-group-head{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;transition:background .1s;background:var(--surface)}
+.orf-group-head:hover{background:var(--gray-50)}
+.orf-chevron{transition:transform .2s;color:var(--text-muted)}
+.orf-group.open .orf-chevron{transform:rotate(180deg)}
+.orf-group-body{border-top:1px solid var(--border);background:var(--gray-50);display:none}
+.orf-group.open .orf-group-body{display:block}
+.orf-file-row{display:flex;align-items:center;gap:12px;padding:10px 16px 10px 44px;border-bottom:1px solid var(--border)}
+.orf-file-row:last-child{border-bottom:none}
+.orf-file-name{flex:1;font-size:13px;color:var(--text-primary)}
+.orf-file-type{width:80px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);flex-shrink:0}
+.orf-dest{width:220px;flex-shrink:0}
+.orf-dest select{font-family:var(--font);font-size:12px;padding:5px 28px 5px 8px;border-radius:var(--radius-md);border:1px solid var(--gray-300);background:var(--surface);color:var(--text-primary);cursor:pointer;width:100%;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M2 3l3 4 3-4' fill='none' stroke='%2364748B' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+.orf-dest select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,121,206,.12)}
+
+/* FORM SELECT */
+select{font-family:var(--font);font-size:13px;padding:8px 32px 8px 12px;border-radius:var(--radius-md);border:1px solid var(--gray-300);background:var(--surface);color:var(--text-primary);cursor:pointer;width:100%;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,121,206,.12)}
+.form-label{display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.4px}
+.form-group{margin-bottom:20px}
+
+/* CONFIRMAR SUMMARY */
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.summary-row:last-child{border-bottom:none}
+.summary-key{color:var(--text-secondary)}
+.summary-val{font-weight:600;color:var(--text-primary)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--gray-800);color:#fff;padding:12px 16px;border-radius:var(--radius-lg);font-size:13px;font-weight:500;box-shadow:var(--shadow-md);display:flex;align-items:center;gap:8px;z-index:9999;transform:translateY(80px);opacity:0;transition:transform .25s,opacity .25s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* FOOTER ACTIONS */
+.footer-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+
+/* CONCLUIDO */
+.success-circle{width:64px;height:64px;border-radius:50%;background:var(--green-light);display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-top">
+    <div class="sidebar-brand">
+      <div class="brand-mark"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v5M7 6l3.5 2M7 6L3.5 8" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      Arco
+    </div>
+  </div>
+  <div class="nav-section">Conteúdo</div>
+  <div class="nav-item active" onclick="goToMain()">
+    <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="2" rx="1" fill="currentColor" opacity=".4"/><rect x="2" y="7" width="12" height="2" rx="1" fill="currentColor" opacity=".7"/><rect x="2" y="11" width="8" height="2" rx="1" fill="currentColor"/></svg>
+    Gestor de Conteúdos
+  </div>
+  <div class="nav-item">
+    <svg viewBox="0 0 16 16" fill="none"><path d="M8 2v3M8 5l-4 3M8 5l4 3M4 8v3M12 8v3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+    Coleções
+  </div>
+  <div class="nav-item">
+    <svg viewBox="0 0 16 16" fill="none"><path d="M8 2v3M8 5l-4 3M8 5l4 3M4 8v3M12 8v3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+    Árvores
+  </div>
+  <div class="nav-section">Operação</div>
+  <div class="nav-item"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.2"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Usuários</div>
+  <div class="nav-item"><svg viewBox="0 0 16 16" fill="none"><path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Relatórios</div>
+  <div class="nav-item"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Configurações</div>
+  <div class="sidebar-bottom">
+    <div class="user-row"><div class="user-av">N</div><span>ops@arco · Admin</span></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="breadcrumb" id="breadcrumb">
+      <span class="bc-link" onclick="goToMain()">Início</span>
+      <span class="bc-sep">/</span>
+      <span class="bc-link" onclick="goToMain()">Conteúdo</span>
+      <span class="bc-sep">/</span>
+      <span>Gestor de Conteúdos</span>
+    </div>
+    <div class="topbar-right">
+      <div class="year-switcher-wrap">
+        <span class="year-label-hint">Ano</span>
+        <div class="year-switcher">
+          <div class="year-opt" id="opt-2026" onclick="setYear('2026')">2026</div>
+          <div class="year-opt active" id="opt-2027" onclick="setYear('2027')">2027</div>
+        </div>
+        <span class="year-context" id="year-ctx">planejamento</span>
+      </div>
+      <div class="user-av" style="width:32px;height:32px;font-size:12px">N</div>
+    </div>
+  </div>
+
+  <!-- TABS BAR -->
+  <div class="tabs-bar" id="tabs-bar">
+    <div class="tab active" id="tab-estante" onclick="switchTab('estante')">Conteúdos da Estante</div>
+    <div class="tab" id="tab-reap" onclick="switchTab('reap')">
+      Reaproveitamento de Conteúdos
+      <span class="tab-new">novo</span>
+    </div>
+  </div>
+
+  <!-- PAGE -->
+  <div class="page" id="page">
+
+    <!-- ══════════════════════════════════════════
+         ABA 1: CONTEÚDOS DA ESTANTE
+    ══════════════════════════════════════════ -->
+    <div class="view active" id="view-estante">
+      <div class="page-inner">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px">
+          <div class="page-header" style="margin-bottom:0">
+            <div class="page-title">Gestor de Conteúdos</div>
+            <div class="page-sub">Conteúdos da Estante · 2027</div>
+          </div>
+          <button class="btn btn-primary">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Cadastrar Conteúdo
+          </button>
+        </div>
+
+        <!-- BANNER -->
+        <div class="banner" id="banner">
+          <div class="banner-icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="var(--blue)" stroke-width="1.4"/><path d="M8 5v4" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11" r=".8" fill="var(--blue)"/></svg>
+          </div>
+          <div class="banner-body">
+            <div class="banner-title">Árvore de 2027 pronta para reaproveitamento</div>
+            <div class="banner-text">A Árvore de 2027 foi publicada e está pronta para migração automática de conteúdos. Inicie o reaproveitamento para levar as coleções para o próximo ano letivo.</div>
+          </div>
+          <div class="banner-actions">
+            <button class="btn btn-primary" onclick="switchTab('reap')">Iniciar reaproveitamento</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('banner').style.display='none'">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- FILTROS -->
+        <div class="card card-sm" style="margin-bottom:20px">
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+            <div style="position:relative">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted)"><circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.3"/><path d="M10 10l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              <input type="text" placeholder="Buscar por nome..." style="width:100%;padding:8px 12px 8px 32px;border:1px solid var(--gray-300);border-radius:var(--radius-md);font-family:var(--font);font-size:13px;color:var(--text-primary)" />
+            </div>
+            <select><option>Coleção: Todas</option><option>CLM</option><option>CAS</option></select>
+            <select><option>Tipo: Todos</option><option>PDF</option><option>Vídeo</option><option>Exercício</option></select>
+            <select><option>Status: Todos</option><option>Publicado</option><option>Rascunho</option></select>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <button class="btn btn-secondary btn-sm">Limpar</button>
+            <button class="btn btn-primary btn-sm">Aplicar filtros</button>
+          </div>
+        </div>
+
+        <!-- TABELA CONTEÚDOS -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <span style="font-size:13px;color:var(--text-secondary)">Exibindo 227 itens</span>
+          <button class="btn btn-secondary btn-sm">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 3h8M3.5 6h5M5 9h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Ações em Massa
+          </button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th><input type="checkbox" /></th><th>Nome</th><th>Status</th><th>Atualizado em</th><th>Coleção</th><th>Nível</th><th>Ano/Série</th><th>Componente Curricular</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr class="clickable"><td><input type="checkbox"/></td><td><div style="font-weight:500">Capítulo 1 — Eureka!</div><div style="font-size:11px;color:var(--text-muted)">PDF</div></td><td><span class="badge badge-success">● Publicado</span></td><td><div style="font-size:12px">Por ernesto.marczal@...</div><div style="font-size:11px;color:var(--text-muted)">23/4/2026</div></td><td>Asas 2027</td><td>Ensino Médio</td><td>6º Ano</td><td>Matemática</td><td><button class="btn btn-ghost"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="2.5" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="11.5" r="1.2" fill="currentColor"/></svg></button></td></tr>
+              <tr class="clickable"><td><input type="checkbox"/></td><td><div style="font-weight:500">Load Test — Exercícios Tarefa</div><div style="font-size:11px;color:var(--text-muted)">Exercício</div></td><td><span class="badge badge-warning">● Rascunho</span></td><td><div style="font-size:12px">Por ivan.ribeiro@arco...</div><div style="font-size:11px;color:var(--text-muted)">13/4/2026</div></td><td>Asas Disciplinar</td><td>Ensino Médio</td><td>7º Ano</td><td>Ciências</td><td><button class="btn btn-ghost"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="2.5" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="11.5" r="1.2" fill="currentColor"/></svg></button></td></tr>
+              <tr class="clickable"><td><input type="checkbox"/></td><td><div style="font-weight:500">Vídeo Aula — Funções Quadráticas</div><div style="font-size:11px;color:var(--text-muted)">Vídeo</div></td><td><span class="badge badge-success">● Publicado</span></td><td><div style="font-size:12px">Por ana.lima@arco...</div><div style="font-size:11px;color:var(--text-muted)">10/4/2026</div></td><td>COC EM Vol.1</td><td>Ensino Médio</td><td>1ª Série</td><td>Matemática</td><td><button class="btn btn-ghost"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="2.5" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="11.5" r="1.2" fill="currentColor"/></svg></button></td></tr>
+              <tr class="clickable"><td><input type="checkbox"/></td><td><div style="font-weight:500">PDF — Redação Dissertativa</div><div style="font-size:11px;color:var(--text-muted)">PDF</div></td><td><span class="badge badge-neutral">● Agendado</span></td><td><div style="font-size:12px">Por carla.nunes@arco...</div><div style="font-size:11px;color:var(--text-muted)">8/4/2026</div></td><td>SAE EM</td><td>Ensino Médio</td><td>2ª Série</td><td>Redação</td><td><button class="btn btn-ghost"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="2.5" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="11.5" r="1.2" fill="currentColor"/></svg></button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--text-muted)">7 de 142 itens · página 1 de 21</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         ABA 2: REAPROVEITAMENTO
+    ══════════════════════════════════════════ -->
+    <div class="view" id="view-reap">
+      <div class="page-inner">
+        <div class="page-header">
+          <div class="page-title">Reaproveitamento de Conteúdos</div>
+          <div class="page-sub">Gerencie a migração de vínculos das coleções de 2026 para a Árvore 2027.</div>
+        </div>
+
+        <!-- SEÇÃO: COLEÇÕES DISPONÍVEIS -->
+        <div class="section-head">
+          <div>
+            <div class="section-title">Coleções disponíveis para reaproveitamento</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Selecione uma ou mais coleções para iniciar ou continuar o reaproveitamento.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="section-meta">Reaproveitamentos abertos · Árvore 2027</span>
+            <button class="btn btn-primary" id="btn-iniciar-sel" disabled onclick="iniciarComSelecao()">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 6h6M6 3l3 3-3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Reaproveitamento selecionadas
+            </button>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-bottom:32px" id="cards-grid">
+
+          <!-- CARD 1: Em andamento -->
+          <div class="col-card" id="card-coc" onclick="toggleCard('coc')">
+            <div class="col-card-check" id="chk-coc"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"></svg></div>
+            <div class="col-card-top">
+              <div class="col-card-icon" style="background:var(--blue-light)">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9a6 6 0 1012 0" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round"/><path d="M15 9l-2 1.5M15 9l-1.5-2" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div>
+                <div class="col-card-name">COC EM Vol.1 <span class="col-code">COC-EM1</span></div>
+                <div class="col-card-year">
+                  <span class="badge badge-info" style="font-size:10px">Em andamento</span>
+                  <span style="color:var(--text-muted)">2026 → 2027</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-card-prog">
+              <div class="col-card-prog-label">
+                <span class="col-card-prog-name">Resolução de órfãos</span>
+                <span class="col-card-prog-val">67 de 212 (32%)</span>
+              </div>
+              <div class="mini-prog-track"><div class="mini-prog-fill" style="width:32%"></div></div>
+            </div>
+            <div class="col-card-footer">
+              <span style="font-size:11px;color:var(--text-muted)">Iniciado em 12 mar 2026</span>
+              <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();goToFluxo('coc')">Continuar</button>
+            </div>
+          </div>
+
+          <!-- CARD 2: Pronto para ativar -->
+          <div class="col-card" id="card-sas" onclick="toggleCard('sas')">
+            <div class="col-card-check" id="chk-sas"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"></svg></div>
+            <div class="col-card-top">
+              <div class="col-card-icon" style="background:var(--green-light)">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9l3.5 3.5 7-7" stroke="var(--green)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div>
+                <div class="col-card-name">SAS 9º ano <span class="col-code">SAS-9</span></div>
+                <div class="col-card-year">
+                  <span class="badge badge-success" style="font-size:10px">Pronto para ativar</span>
+                  <span style="color:var(--text-muted)">2026 → 2027</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-card-prog">
+              <div class="col-card-prog-label">
+                <span class="col-card-prog-name">Todos os itens resolvidos</span>
+                <span class="col-card-prog-val" style="color:var(--green-text)">100%</span>
+              </div>
+              <div class="mini-prog-track"><div class="mini-prog-fill" style="width:100%"></div></div>
+            </div>
+            <div class="col-card-footer">
+              <span style="font-size:11px;color:var(--text-muted)">Iniciado em 03 mar 2026</span>
+              <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation()">Ver resultado</button>
+            </div>
+          </div>
+
+          <!-- CARD 3: Revisão pendente -->
+          <div class="col-card" id="card-conquista" onclick="toggleCard('conquista')">
+            <div class="col-card-check" id="chk-conquista"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"></svg></div>
+            <div class="col-card-top">
+              <div class="col-card-icon" style="background:var(--yellow-light)">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 4v5" stroke="var(--yellow-text)" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="13" r="1" fill="var(--yellow-text)"/><circle cx="9" cy="9" r="7" stroke="var(--yellow-text)" stroke-width="1.2"/></svg>
+              </div>
+              <div>
+                <div class="col-card-name">Conquista EF1 <span class="col-code">CON-EF1</span></div>
+                <div class="col-card-year">
+                  <span class="badge badge-warning" style="font-size:10px">Revisão pendente</span>
+                  <span style="color:var(--text-muted)">2026 → 2027</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-card-prog">
+              <div class="col-card-prog-label">
+                <span class="col-card-prog-name">Mapeamento de destino</span>
+                <span class="col-card-prog-val">480 de 2.015 (24%)</span>
+              </div>
+              <div class="mini-prog-track"><div class="mini-prog-fill" style="width:24%"></div></div>
+            </div>
+            <div class="col-card-footer">
+              <span style="font-size:11px;color:var(--text-muted)">Iniciado em 18 mar 2026</span>
+              <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();goToFluxo('conquista')">Revisar órfãos</button>
+            </div>
+          </div>
+
+          <!-- CARD 4: Não iniciado -->
+          <div class="col-card" id="card-sae" onclick="toggleCard('sae')">
+            <div class="col-card-check" id="chk-sae"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"></svg></div>
+            <div class="col-card-top">
+              <div class="col-card-icon" style="background:var(--gray-100)">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="var(--gray-400)" stroke-width="1.2"/><path d="M9 5v8M5 9h8" stroke="var(--gray-400)" stroke-width="1.2" stroke-linecap="round"/></svg>
+              </div>
+              <div>
+                <div class="col-card-name">SAE EM <span class="col-code">SAE-EM</span></div>
+                <div class="col-card-year">
+                  <span class="badge badge-neutral" style="font-size:10px">Não iniciado</span>
+                  <span style="color:var(--text-muted)">2026 → 2027</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-card-prog">
+              <div class="col-card-prog-label">
+                <span class="col-card-prog-name" style="color:var(--text-muted)">—</span>
+                <span class="col-card-prog-val" style="color:var(--text-muted)">—</span>
+              </div>
+              <div class="mini-prog-track"><div class="mini-prog-fill" style="width:0%"></div></div>
+            </div>
+            <div class="col-card-footer">
+              <span style="font-size:11px;color:var(--text-muted)">Não iniciado</span>
+              <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();goToFluxo('sae')">Iniciar</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SEÇÃO: HISTÓRICO CONCLUÍDOS -->
+        <div class="section-head">
+          <div class="section-title">Concluídos</div>
+          <span class="section-meta">Histórico de Reaproveitamentos</span>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Coleção · Origem → Destino</th><th>Data de conclusão</th><th>Itens migrados</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr class="clickable"><td><span style="font-weight:500">COC EM Vol.1 · 2025 → 2026</span></td><td>nov/2025</td><td>4.000</td><td><span class="badge badge-success">● Ativo</span></td><td style="text-align:right"><button class="btn btn-secondary btn-xs">Ver relatório</button> <button class="btn btn-ghost btn-xs" style="font-size:12px">Editar</button></td></tr>
+              <tr class="clickable"><td><span style="font-weight:500">SAS EF2 · 2025 → 2026</span></td><td>out/2025</td><td>1.240</td><td><span class="badge badge-success">● Ativo</span></td><td style="text-align:right"><button class="btn btn-secondary btn-xs">Ver relatório</button> <button class="btn btn-ghost btn-xs" style="font-size:12px">Editar</button></td></tr>
+              <tr class="clickable"><td><span style="font-weight:500">Conquista EF1 · 2024 → 2025</span></td><td>dez/2024</td><td>3.120</td><td><span class="badge badge-warning">● Rascunho</span></td><td style="text-align:right"><button class="btn btn-secondary btn-xs">Ver relatório</button> <button class="btn btn-ghost btn-xs" style="font-size:12px">Editar</button></td></tr>
+              <tr class="clickable"><td><span style="font-weight:500">SAE EM · 2024 → 2025</span></td><td>nov/2024</td><td>862</td><td><span class="badge badge-neutral">● Inativo</span></td><td style="text-align:right"><button class="btn btn-secondary btn-xs">Ver relatório</button> <button class="btn btn-ghost btn-xs" style="font-size:12px">Editar</button></td></tr>
+              <tr class="clickable"><td><span style="font-weight:500">Positivo EF2 · 2024 → 2025</span></td><td>out/2024</td><td>540</td><td><span class="badge badge-success">● Ativo</span></td><td style="text-align:right"><button class="btn btn-secondary btn-xs">Ver relatório</button> <button class="btn btn-ghost btn-xs" style="font-size:12px">Editar</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">5 de 28 registros · página 1 de 5</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         ETAPA 1: SELEÇÃO
+    ══════════════════════════════════════════ -->
+    <div class="view" id="view-e1">
+      <div class="page-inner">
+        <div class="page-header">
+          <div class="page-title">Reaproveitamento de Conteúdos</div>
+        </div>
+        <div class="stepper">
+          <div class="step active"><div class="step-dot">1</div>&nbsp;Seleção</div>
+          <div class="step-line"></div>
+          <div class="step"><div class="step-dot">2</div>&nbsp;Diagnóstico</div>
+          <div class="step-line"></div>
+          <div class="step"><div class="step-dot">3</div>&nbsp;Resolver órfãos</div>
+          <div class="step-line"></div>
+          <div class="step"><div class="step-dot">4</div>&nbsp;Confirmar</div>
+        </div>
+
+        <div class="card">
+          <div style="font-size:16px;font-weight:700;margin-bottom:4px">Seleção</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:24px">Configure os parâmetros do reaproveitamento antes de gerar o diagnóstico.</div>
+
+          <div class="grid2" style="gap:20px;margin-bottom:24px">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Coleção de destino (Árvore 2027)</label>
+              <select id="sel-destino">
+                <option value="sae">SAE EM 2027 (sugerido)</option>
+                <option value="coc">COC EM Vol.1 2027</option>
+                <option value="conquista">Conquista EF1 2027</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Ano de origem</label>
+              <select id="sel-origem-e1">
+                <option value="2026" selected>2026</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="divider" style="margin:20px 0"></div>
+
+          <div class="form-label" style="margin-bottom:12px">Tipos de conteúdo a reaproveitar</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px">Todos selecionados por padrão. Desmarque os que não deseja incluir.</div>
+          <div class="tipo-grid" id="tipo-grid">
+            <div class="tipo-chip on" onclick="toggleTipo(this)"><div class="chip-box"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>PDF</div>
+            <div class="tipo-chip on" onclick="toggleTipo(this)"><div class="chip-box"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Vídeo</div>
+            <div class="tipo-chip on" onclick="toggleTipo(this)"><div class="chip-box"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Exercício</div>
+            <div class="tipo-chip on" onclick="toggleTipo(this)"><div class="chip-box"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Trilha</div>
+            <div class="tipo-chip on" onclick="toggleTipo(this)"><div class="chip-box"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Áudio</div>
+            <div class="tipo-chip on" onclick="toggleTipo(this)"><div class="chip-box"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Link</div>
+            <div class="tipo-chip on" onclick="toggleTipo(this)"><div class="chip-box"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Livro Digital</div>
+          </div>
+          <div style="margin-top:10px;font-size:12px;color:var(--text-muted)" id="tipo-count">7 de 7 tipos selecionados</div>
+
+          <div class="footer-actions">
+            <button class="btn btn-secondary" onclick="switchTab('reap')">Cancelar</button>
+            <button class="btn btn-primary" onclick="goView('e2')">
+              Gerar diagnóstico
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         ETAPA 2: DIAGNÓSTICO
+    ══════════════════════════════════════════ -->
+    <div class="view" id="view-e2">
+      <div class="page-inner">
+        <div class="page-header">
+          <div class="page-title">Diagnóstico de correspondência</div>
+          <div class="page-sub">Comparamos a estrutura de <strong id="diag-col-name">SAE EM 2026</strong> com a árvore publicada de 2027.</div>
+        </div>
+
+        <div class="stepper">
+          <div class="step done"><div class="step-dot">✓</div>&nbsp;Seleção</div>
+          <div class="step-line done"></div>
+          <div class="step active"><div class="step-dot">2</div>&nbsp;Diagnóstico</div>
+          <div class="step-line"></div>
+          <div class="step"><div class="step-dot">3</div>&nbsp;Resolver órfãos</div>
+          <div class="step-line"></div>
+          <div class="step"><div class="step-dot">4</div>&nbsp;Confirmar</div>
+        </div>
+
+        <!-- BIG NUMBERS: 2 apenas -->
+        <div class="grid2" style="margin-bottom:20px">
+          <div class="stat-big" style="background:var(--green-light);border:1px solid var(--green-border)">
+            <div class="stat-big-label" style="color:var(--green-text)">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Correspondência exata
+            </div>
+            <div class="stat-big-num" style="color:var(--green-text)">73%</div>
+            <div class="stat-big-sub" style="color:var(--green-text)">890 materiais com vínculos exatos por Node ID</div>
+          </div>
+          <div class="stat-big" style="background:var(--red-light);border:1px solid var(--red-border)">
+            <div class="stat-big-label" style="color:var(--red-text)">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              Sem vínculo · Órfãos
+            </div>
+            <div class="stat-big-num" style="color:var(--red-text)">27%</div>
+            <div class="stat-big-sub" style="color:var(--red-text)">329 materiais sem correspondência na Árvore 2027</div>
+          </div>
+        </div>
+
+        <!-- DISTRIBUIÇÃO -->
+        <div class="card" style="margin-bottom:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <div style="font-weight:600;font-size:14px">Distribuição da análise</div>
+            <span style="font-size:12px;color:var(--text-muted)">1.219 galhos · 1.084 conteúdos</span>
+          </div>
+          <div class="prog-tri">
+            <div class="prog-green" style="width:73%"></div>
+            <div class="prog-red" style="width:27%"></div>
+          </div>
+          <div class="prog-legend">
+            <div class="prog-leg-item"><div class="prog-dot" style="background:var(--green)"></div>Correspondência exata · match por ID (73%)</div>
+            <div class="prog-leg-item"><div class="prog-dot" style="background:var(--red)"></div>Sem vínculo · requer ação manual (27%)</div>
+          </div>
+        </div>
+
+        <!-- ANÁLISE POR DISCIPLINA -->
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div>
+              <div style="font-weight:600;font-size:14px">Análise por disciplina</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Clique em uma disciplina para ver os materiais não reaproveitados</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="showToast('Relatório exportado com sucesso')">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5.5l3 3 3-3M1 10h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Exportar relatório
+            </button>
+          </div>
+
+          <!-- Disciplina 1: 100% -->
+          <div class="disc-row">
+            <div class="disc-name">1ª série · Matemática<span class="disc-serie">Ensino Médio</span></div>
+            <div class="disc-bar-wrap">
+              <div class="disc-bar"><div class="disc-bar-fill" style="width:100%"></div></div>
+              <div class="disc-nums">128 materiais reaproveitados · 0 órfãos</div>
+            </div>
+            <div class="disc-pct" style="color:var(--green-text)">100%</div>
+            <div class="disc-orphan">—</div>
+          </div>
+
+          <!-- Disciplina 2: 80% -->
+          <div class="disc-row" style="cursor:pointer" onclick="toggleDiscDetail('disc-fis')">
+            <div class="disc-name">1ª série · Física<span class="disc-serie">Ensino Médio</span></div>
+            <div class="disc-bar-wrap">
+              <div class="disc-bar"><div class="disc-bar-fill" style="width:80%"></div></div>
+              <div class="disc-nums">94 reaproveitados · 24 órfãos</div>
+            </div>
+            <div class="disc-pct" style="color:var(--yellow-text)">80%</div>
+            <div class="disc-orphan">24 órfãos</div>
+          </div>
+          <!-- Detalhe inline Física -->
+          <div id="disc-fis" style="display:none;background:var(--gray-50);border-radius:var(--radius-md);margin:4px 0 8px;overflow:hidden;border:1px solid var(--border)">
+            <div style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);background:var(--gray-100)">Materiais não reaproveitados — 1ª série · Física</div>
+            <table class="tbl" style="font-size:12px">
+              <thead><tr><th>Nome</th><th>Tipo</th><th>Motivo</th></tr></thead>
+              <tbody>
+                <tr><td>Ondulatória aplicada — Módulo 3</td><td>PDF</td><td style="color:var(--red-text)">Node ID não encontrado na Árvore 2027</td></tr>
+                <tr><td>Videoaula — Eletromagnetismo</td><td>Vídeo</td><td style="color:var(--red-text)">Galho renomeado após publicação</td></tr>
+                <tr><td>Lista de exercícios — Óptica</td><td>Exercício</td><td style="color:var(--red-text)">Node ID não encontrado na Árvore 2027</td></tr>
+                <tr><td>Podcast — Termodinâmica</td><td>Áudio</td><td style="color:var(--red-text)">Capítulo não existe na estrutura 2027</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Disciplina 3: 60% -->
+          <div class="disc-row" style="cursor:pointer" onclick="toggleDiscDetail('disc-red')">
+            <div class="disc-name">2ª série · Redação<span class="disc-serie">Ensino Médio</span></div>
+            <div class="disc-bar-wrap">
+              <div class="disc-bar"><div class="disc-bar-fill" style="width:60%"></div></div>
+              <div class="disc-nums">68 reaproveitados · 46 órfãos</div>
+            </div>
+            <div class="disc-pct" style="color:var(--yellow-text)">60%</div>
+            <div class="disc-orphan">46 órfãos</div>
+          </div>
+          <div id="disc-red" style="display:none;background:var(--gray-50);border-radius:var(--radius-md);margin:4px 0 8px;overflow:hidden;border:1px solid var(--border)">
+            <div style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);background:var(--gray-100)">Materiais não reaproveitados — 2ª série · Redação</div>
+            <table class="tbl" style="font-size:12px">
+              <thead><tr><th>Nome</th><th>Tipo</th><th>Motivo</th></tr></thead>
+              <tbody>
+                <tr><td>Dissertação argumentativa — Vol. 2</td><td>PDF</td><td style="color:var(--red-text)">Node ID não encontrado na Árvore 2027</td></tr>
+                <tr><td>Videoaula — Carta argumentativa</td><td>Vídeo</td><td style="color:var(--red-text)">Galho excluído da estrutura 2027</td></tr>
+                <tr><td>Exercícios — Coesão textual</td><td>Exercício</td><td style="color:var(--red-text)">Node ID não encontrado na Árvore 2027</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Disciplina 4: 88% -->
+          <div class="disc-row" style="cursor:pointer" onclick="toggleDiscDetail('disc-hist')">
+            <div class="disc-name">2ª série · História<span class="disc-serie">Ensino Médio</span></div>
+            <div class="disc-bar-wrap">
+              <div class="disc-bar"><div class="disc-bar-fill" style="width:88%"></div></div>
+              <div class="disc-nums">112 reaproveitados · 15 órfãos</div>
+            </div>
+            <div class="disc-pct" style="color:var(--green-text)">88%</div>
+            <div class="disc-orphan">15 órfãos</div>
+          </div>
+          <div id="disc-hist" style="display:none;background:var(--gray-50);border-radius:var(--radius-md);margin:4px 0 8px;overflow:hidden;border:1px solid var(--border)">
+            <div style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);background:var(--gray-100)">Materiais não reaproveitados — 2ª série · História</div>
+            <table class="tbl" style="font-size:12px">
+              <thead><tr><th>Nome</th><th>Tipo</th><th>Motivo</th></tr></thead>
+              <tbody>
+                <tr><td>Moderna — Módulo 2</td><td>PDF</td><td style="color:var(--red-text)">Node ID não encontrado na Árvore 2027</td></tr>
+                <tr><td>Videoaula — Era Napoleônica</td><td>Vídeo</td><td style="color:var(--red-text)">Galho renomeado após publicação</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Disciplina 5: 92% -->
+          <div class="disc-row">
+            <div class="disc-name">3ª série · Biologia<span class="disc-serie">Ensino Médio</span></div>
+            <div class="disc-bar-wrap">
+              <div class="disc-bar"><div class="disc-bar-fill" style="width:92%"></div></div>
+              <div class="disc-nums">94 reaproveitados · 8 órfãos</div>
+            </div>
+            <div class="disc-pct" style="color:var(--green-text)">92%</div>
+            <div class="disc-orphan">8 órfãos</div>
+          </div>
+
+          <!-- Disciplina 6: 100% -->
+          <div class="disc-row">
+            <div class="disc-name">3ª série · Química<span class="disc-serie">Ensino Médio</span></div>
+            <div class="disc-bar-wrap">
+              <div class="disc-bar"><div class="disc-bar-fill" style="width:55%"></div></div>
+              <div class="disc-nums">29 reaproveitados · 24 órfãos</div>
+            </div>
+            <div class="disc-pct" style="color:var(--red-text)">55%</div>
+            <div class="disc-orphan">24 órfãos</div>
+          </div>
+
+        </div>
+
+        <div class="footer-actions">
+          <button class="btn btn-secondary" onclick="goView('e1')">Voltar</button>
+          <button class="btn btn-secondary" onclick="goView('e4')">Pular órfãos</button>
+          <button class="btn btn-primary" onclick="goView('e3')">
+            Resolver órfãos
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         ETAPA 3: RESOLVER ÓRFÃOS
+    ══════════════════════════════════════════ -->
+    <div class="view" id="view-e3">
+      <div class="page-inner">
+        <div class="page-header">
+          <div class="page-title">Resolver órfãos</div>
+          <div class="page-sub">Decida o destino dos galhos que não encontraram correspondência na árvore de 2027.</div>
+        </div>
+
+        <div class="stepper">
+          <div class="step done"><div class="step-dot">✓</div>&nbsp;Seleção</div>
+          <div class="step-line done"></div>
+          <div class="step done"><div class="step-dot">✓</div>&nbsp;Diagnóstico</div>
+          <div class="step-line done"></div>
+          <div class="step active"><div class="step-dot">3</div>&nbsp;Resolver órfãos</div>
+          <div class="step-line"></div>
+          <div class="step"><div class="step-dot">4</div>&nbsp;Confirmar</div>
+        </div>
+
+        <div class="card" style="margin-bottom:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <div>
+              <div style="font-size:15px;font-weight:700">Galhos sem vínculo</div>
+              <div style="font-size:13px;color:var(--text-muted)">3 galhos aguardam decisão · 534 conteúdos no total</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:12px;color:var(--text-muted)">Etapa opcional — você pode avançar e resolver depois</span>
+              <button class="btn btn-secondary btn-sm" onclick="showToast('Planilha exportada')">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5.5l3 3 3-3M1 10h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Exportar planilha
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- GRUPO ÓRFÃO 1 -->
+        <div class="orf-group open" id="og1">
+          <div class="orf-group-head" onclick="toggleOrfGroup('og1')">
+            <svg class="orf-chevron" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div style="flex:1">
+              <div style="font-size:11px;color:var(--text-muted)">Ensino Médio · 1ª série · Química</div>
+              <div style="font-weight:600;font-size:14px">Lab. Prático</div>
+            </div>
+            <span style="font-size:13px;font-weight:600;color:var(--text-primary);margin-right:12px">29</span>
+            <span class="badge badge-sem">Sem vínculo</span>
+            <div style="width:220px;margin-left:12px" onclick="event.stopPropagation()">
+              <select style="font-size:12px">
+                <option>Química › Experimentos guiados</option>
+                <option>Química › Lab. Virtual</option>
+                <option>Química › Prática Aplicada</option>
+              </select>
+            </div>
+            <button class="btn-danger-ghost" onclick="event.stopPropagation();showToast('Galho descartado')">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 3h8M5 3V2h2v1M4 3v6h4V3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Descartar
+            </button>
+          </div>
+          <div class="orf-group-body">
+            <div style="padding:8px 16px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)">Arquivos deste galho</div>
+            <div style="display:flex;padding:8px 44px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);background:var(--surface)">
+              <span style="flex:1">Arquivo</span><span style="width:80px">Tipo</span><span style="width:220px">Destino específico</span>
+            </div>
+            <div class="orf-file-row">
+              <div class="orf-file-name">Roteiro — Titulação ácido-base</div>
+              <div class="orf-file-type">PDF</div>
+              <div class="orf-dest"><select><option>Experimentos guiados › Ácidos</option><option>Lab. Virtual › Ácidos</option></select></div>
+            </div>
+            <div class="orf-file-row">
+              <div class="orf-file-name">Videoaula — Reações de neutralização</div>
+              <div class="orf-file-type">Vídeo</div>
+              <div class="orf-dest"><select><option>Experimentos guiados › Ácidos</option><option>Lab. Virtual › Neutralização</option></select></div>
+            </div>
+            <div class="orf-file-row">
+              <div class="orf-file-name">Lista — Reações de oxirredução (20 questões)</div>
+              <div class="orf-file-type">Exercício</div>
+              <div class="orf-dest"><select><option>Atividades práticas › Titulação</option><option>Prática Aplicada › Oxidação</option></select></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GRUPO ÓRFÃO 2 -->
+        <div class="orf-group" id="og2">
+          <div class="orf-group-head" onclick="toggleOrfGroup('og2')">
+            <svg class="orf-chevron" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div style="flex:1">
+              <div style="font-size:11px;color:var(--text-muted)">Ensino Médio · 2ª série · História</div>
+              <div style="font-weight:600;font-size:14px">Moderna</div>
+            </div>
+            <span style="font-size:13px;font-weight:600;color:var(--text-primary);margin-right:12px">22</span>
+            <span class="badge badge-sem">Sem vínculo</span>
+            <div style="width:220px;margin-left:12px" onclick="event.stopPropagation()">
+              <select style="font-size:12px">
+                <option>História › Idade Moderna</option>
+                <option>História › Renascimento</option>
+              </select>
+            </div>
+            <button class="btn-danger-ghost" onclick="event.stopPropagation();showToast('Galho descartado')">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 3h8M5 3V2h2v1M4 3v6h4V3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Descartar
+            </button>
+          </div>
+          <div class="orf-group-body">
+            <div style="padding:8px 16px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)">Arquivos deste galho</div>
+            <div style="display:flex;padding:8px 44px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);background:var(--surface)">
+              <span style="flex:1">Arquivo</span><span style="width:80px">Tipo</span><span style="width:220px">Destino específico</span>
+            </div>
+            <div class="orf-file-row">
+              <div class="orf-file-name">Moderna — Módulo 2</div>
+              <div class="orf-file-type">PDF</div>
+              <div class="orf-dest"><select><option>Idade Moderna › Absolutismo</option><option>Renascimento › Arte</option></select></div>
+            </div>
+            <div class="orf-file-row">
+              <div class="orf-file-name">Videoaula — Era Napoleônica</div>
+              <div class="orf-file-type">Vídeo</div>
+              <div class="orf-dest"><select><option>Idade Moderna › Revolução Francesa</option><option>Idade Moderna › Napoleão</option></select></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GRUPO ÓRFÃO 3 — volume alto, importação de planilha -->
+        <div class="orf-group" id="og3">
+          <div class="orf-group-head" onclick="toggleOrfGroup('og3')">
+            <svg class="orf-chevron" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div style="flex:1">
+              <div style="font-size:11px;color:var(--text-muted)">Ensino Médio · 3ª série · Geografia</div>
+              <div style="font-weight:600;font-size:14px">Regional</div>
+            </div>
+            <span style="font-size:13px;font-weight:600;color:var(--text-primary);margin-right:12px">483</span>
+            <span class="badge badge-sem" id="og3-badge">Sem vínculo</span>
+            <!-- Estado 1: aguardando importação -->
+            <div id="og3-state-pending" style="display:flex;align-items:center;gap:8px;margin-left:12px" onclick="event.stopPropagation()">
+              <span style="font-size:12px;color:var(--text-secondary)">483 itens · mapeie o destino em planilha e importe aqui</span>
+              <label class="btn btn-primary btn-sm" style="cursor:pointer;margin:0">
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 10V3M3 6.5l3-3 3 3M1 10h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Importar planilha
+                <input type="file" accept=".xlsx,.csv" style="display:none" onchange="importarPlanilha()" />
+              </label>
+            </div>
+            <!-- Estado 2: planilha importada -->
+            <div id="og3-state-done" style="display:none;align-items:center;gap:8px;margin-left:12px">
+              <span style="font-size:12px;color:var(--green-text);font-weight:500;display:flex;align-items:center;gap:5px">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5l3.5 3.5 5.5-5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Planilha importada · 483 itens mapeados
+              </span>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;color:var(--text-muted)" onclick="event.stopPropagation();resetImport()">Substituir</button>
+            </div>
+          </div>
+          <div class="orf-group-body">
+            <div style="padding:20px 20px;color:var(--text-secondary);font-size:13px" id="og3-body-content">
+              <div style="display:flex;align-items:flex-start;gap:12px;background:var(--gray-100);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="flex-shrink:0;margin-top:1px;color:var(--text-muted)"><rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                <div>
+                  <div style="font-weight:600;color:var(--text-primary);margin-bottom:4px">Como funciona o mapeamento via planilha</div>
+                  <div style="font-size:12px;line-height:1.6;color:var(--text-secondary)">
+                    1. Exporte o relatório de órfãos na etapa de Diagnóstico — ele já contém todos os 483 itens deste galho com o campo "Destino" em branco.<br>
+                    2. Preencha a coluna "Destino" com o caminho do galho correto na Árvore 2027 (ex: <code style="background:var(--border);padding:1px 4px;border-radius:3px;font-size:11px">Geografia › Regional › Sudeste</code>).<br>
+                    3. Salve e importe o arquivo aqui usando o botão acima.
+                  </div>
+                </div>
+              </div>
+            </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-actions">
+          <button class="btn btn-secondary" onclick="goView('e2')">Voltar</button>
+          <button class="btn btn-primary" onclick="goView('e4')">
+            Avançar para confirmação
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         ETAPA 4: CONFIRMAR
+    ══════════════════════════════════════════ -->
+    <div class="view" id="view-e4">
+      <div class="page-inner">
+        <div class="page-header">
+          <div class="page-title">Confirmar reaproveitamento</div>
+          <div class="page-sub">Revise o resumo antes de concluir.</div>
+        </div>
+
+        <div class="stepper">
+          <div class="step done"><div class="step-dot">✓</div>&nbsp;Seleção</div>
+          <div class="step-line done"></div>
+          <div class="step done"><div class="step-dot">✓</div>&nbsp;Diagnóstico</div>
+          <div class="step-line done"></div>
+          <div class="step done"><div class="step-dot">✓</div>&nbsp;Resolver órfãos</div>
+          <div class="step-line done"></div>
+          <div class="step active"><div class="step-dot">4</div>&nbsp;Confirmar</div>
+        </div>
+
+        <div class="card" style="max-width:600px;margin:0 auto">
+          <div style="font-size:15px;font-weight:700;margin-bottom:16px">Resumo do reaproveitamento</div>
+
+          <div class="grid3" style="margin-bottom:24px">
+            <div style="background:var(--green-light);border-radius:var(--radius-lg);padding:16px;text-align:center">
+              <div style="font-size:24px;font-weight:700;color:var(--green-text)">890</div>
+              <div style="font-size:11px;color:var(--green-text);margin-top:4px">Vínculos automáticos</div>
+            </div>
+            <div style="background:var(--blue-light);border-radius:var(--radius-lg);padding:16px;text-align:center">
+              <div style="font-size:24px;font-weight:700;color:var(--blue-hover)">51</div>
+              <div style="font-size:11px;color:var(--blue-hover);margin-top:4px">Órfãos mapeados</div>
+            </div>
+            <div style="background:var(--gray-100);border-radius:var(--radius-lg);padding:16px;text-align:center">
+              <div style="font-size:24px;font-weight:700;color:var(--gray-600)">278</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:4px">Sem vínculo</div>
+            </div>
+          </div>
+
+          <div style="background:var(--gray-50);border-radius:var(--radius-lg);padding:16px;margin-bottom:20px">
+            <div class="summary-row"><span class="summary-key">Coleção de destino</span><span class="summary-val">SAE EM 2027</span></div>
+            <div class="summary-row"><span class="summary-key">Ano de origem</span><span class="summary-val">2026</span></div>
+            <div class="summary-row"><span class="summary-key">Tipos incluídos</span><span class="summary-val">Todos (7 tipos)</span></div>
+            <div class="summary-row"><span class="summary-key">Total processado</span><span class="summary-val">1.219 materiais</span></div>
+            <div class="summary-row"><span class="summary-key">Status após confirmação</span><span class="summary-val"><span class="badge badge-partial">Parcial finalizado</span></span></div>
+          </div>
+
+          <div style="background:var(--yellow-light);border:1px solid var(--yellow-border);border-radius:var(--radius-md);padding:12px 14px;font-size:13px;color:var(--yellow-text);margin-bottom:20px;display:flex;gap:8px">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><path d="M8 2L14.5 13H1.5L8 2Z" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linejoin="round"/><path d="M8 6.5v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="8" cy="11" r=".8" fill="currentColor"/></svg>
+            <span>278 conteúdos sem vínculo <strong>não aparecerão na Estante 2027</strong>. Você pode resolvê-los depois pela aba Reaproveitamento.</span>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <button class="btn btn-secondary" onclick="goView('e3')">Voltar</button>
+            <button class="btn btn-primary" onclick="goView('concluido')">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3.5 3.5 5.5-5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Confirmar reaproveitamento
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         CONCLUÍDO
+    ══════════════════════════════════════════ -->
+    <div class="view" id="view-concluido">
+      <div class="page-inner" style="max-width:560px;margin:64px auto;text-align:center">
+        <div class="success-circle">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M5 14l6 6 12-12" stroke="var(--green-text)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div style="font-size:22px;font-weight:700;margin-bottom:8px">Reaproveitamento concluído</div>
+        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:32px;line-height:1.6">941 conteúdos foram vinculados com sucesso à Árvore 2027. Os 278 conteúdos sem vínculo podem ser resolvidos a qualquer momento pela aba <strong>Reaproveitamento de Conteúdos</strong>.</div>
+        <div style="display:flex;justify-content:center;gap:12px">
+          <button class="btn btn-secondary" onclick="switchTab('reap')">Ir para Reaproveitamento</button>
+          <button class="btn btn-primary" onclick="goToMain()">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Voltar para Conteúdos da Estante
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /page -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<div class="toast" id="toast">
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-6" stroke="#12B262" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <span id="toast-msg">Ação realizada!</span>
+</div>
+
+<script>
+let currentYear = '2027';
+let selectedCards = new Set();
+let toastT;
+
+/* NAV */
+function goToMain() { switchTab('estante'); }
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  const map = {estante:'estante', reap:'reap'};
+  goView(map[tab] || tab);
+  setBreadcrumb(tab === 'reap' ? [{l:'Gestor de Conteúdos',onclick:"switchTab('estante')"},{l:'Reaproveitamento'}] : [{l:'Gestor de Conteúdos'}]);
+}
+
+function goView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.getElementById('page').scrollTop = 0;
+  // breadcrumb para etapas do fluxo
+  const fluxoViews = {e1:'Seleção', e2:'Diagnóstico', e3:'Resolver órfãos', e4:'Confirmar', concluido:'Concluído'};
+  if(fluxoViews[v]) {
+    setBreadcrumb([{l:'Gestor de Conteúdos',fn:"switchTab('estante')"},{l:'Reaproveitamento',fn:"switchTab('reap')"},{l:fluxoViews[v]}]);
+  }
+}
+
+function setBreadcrumb(items) {
+  const bc = document.getElementById('breadcrumb');
+  const base = `<span class="bc-link" onclick="switchTab('estante')">Início</span><span class="bc-sep">/</span><span class="bc-link" onclick="switchTab('estante')">Conteúdo</span><span class="bc-sep">/</span>`;
+  let html = base;
+  items.forEach((it,i) => {
+    if(i > 0) html += `<span class="bc-sep">/</span>`;
+    if(it.fn) html += `<span class="bc-link" onclick="${it.fn}">${it.l}</span>`;
+    else if(it.onclick) html += `<span class="bc-link" onclick="${it.onclick}">${it.l}</span>`;
+    else html += `<span>${it.l}</span>`;
+  });
+  bc.innerHTML = html;
+}
+
+/* ANO */
+function setYear(y) {
+  currentYear = y;
+  ['2026','2027'].forEach(yr => document.getElementById('opt-'+yr).classList.toggle('active', yr===y));
+  document.getElementById('year-ctx').textContent = y==='2027' ? 'planejamento' : 'ano vigente';
+  const b = document.getElementById('banner');
+  if(b) b.style.display = y==='2027' ? '' : 'none';
+}
+
+/* CARDS SELEÇÃO */
+function toggleCard(id) {
+  const card = document.getElementById('card-'+id);
+  const chk = document.getElementById('chk-'+id);
+  if(selectedCards.has(id)) {
+    selectedCards.delete(id);
+    card.classList.remove('selected');
+    chk.innerHTML = `<svg width="10" height="10" viewBox="0 0 10 10" fill="none"></svg>`;
+  } else {
+    selectedCards.add(id);
+    card.classList.add('selected');
+    chk.innerHTML = `<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 5-5" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+  const btn = document.getElementById('btn-iniciar-sel');
+  btn.disabled = selectedCards.size === 0;
+  btn.textContent = selectedCards.size > 1
+    ? `Reaproveitar ${selectedCards.size} selecionadas`
+    : selectedCards.size === 1 ? 'Reaproveitar selecionada' : 'Reaproveitamento selecionadas';
+  if(selectedCards.size > 0) btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 6h6M6 3l3 3-3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> ${btn.textContent}`;
+}
+
+function iniciarComSelecao() { goView('e1'); }
+function goToFluxo(id) { selectedCards.clear(); selectedCards.add(id); goView('e1'); }
+
+/* TIPOS */
+function toggleTipo(el) {
+  el.classList.toggle('on');
+  const box = el.querySelector('.chip-box');
+  box.innerHTML = el.classList.contains('on')
+    ? `<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2 2 4-4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+    : '';
+  const n = document.querySelectorAll('.tipo-chip.on').length;
+  document.getElementById('tipo-count').textContent = n + ' de 7 tipos selecionados';
+}
+
+/* DISCIPLINAS DETALHE */
+function toggleDiscDetail(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+/* ORFÃO GRUPOS */
+function toggleOrfGroup(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+/* IMPORTAÇÃO PLANILHA — grupo 3 */
+function importarPlanilha() {
+  showToast('Processando planilha...');
+  setTimeout(() => {
+    document.getElementById('og3-state-pending').style.display = 'none';
+    const done = document.getElementById('og3-state-done');
+    done.style.display = 'flex';
+    document.getElementById('og3-badge').className = 'badge badge-success';
+    document.getElementById('og3-badge').textContent = 'Mapeado';
+    document.getElementById('og3-body-content').innerHTML = `
+      <div style="padding:8px 16px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)">Prévia do mapeamento importado</div>
+      <table class="tbl" style="font-size:12px">
+        <thead><tr><th>Arquivo</th><th>Tipo</th><th>Destino mapeado</th></tr></thead>
+        <tbody>
+          <tr><td>Regional — Sudeste Vol.1</td><td>PDF</td><td style="color:var(--green-text)">Geografia › Regional › Sudeste</td></tr>
+          <tr><td>Videoaula — Nordeste</td><td>Vídeo</td><td style="color:var(--green-text)">Geografia › Regional › Nordeste</td></tr>
+          <tr><td>Exercícios — Biomas</td><td>Exercício</td><td style="color:var(--green-text)">Geografia › Regional › Biomas</td></tr>
+          <tr><td colspan="3" style="color:var(--text-muted);text-align:center;font-style:italic;padding:10px">+ 480 itens mapeados via planilha</td></tr>
+        </tbody>
+      </table>`;
+    showToast('483 itens mapeados com sucesso');
+  }, 800);
+}
+
+function resetImport() {
+  document.getElementById('og3-state-pending').style.display = 'flex';
+  document.getElementById('og3-state-done').style.display = 'none';
+  document.getElementById('og3-badge').className = 'badge badge-sem';
+  document.getElementById('og3-badge').textContent = 'Sem vínculo';
+  document.getElementById('og3-body-content').innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:12px;background:var(--gray-100);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="flex-shrink:0;margin-top:1px;color:var(--text-muted)"><rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      <div>
+        <div style="font-weight:600;color:var(--text-primary);margin-bottom:4px">Como funciona o mapeamento via planilha</div>
+        <div style="font-size:12px;line-height:1.6;color:var(--text-secondary)">
+          1. Exporte o relatório de órfãos na etapa de Diagnóstico — ele já contém todos os 483 itens com o campo "Destino" em branco.<br>
+          2. Preencha a coluna "Destino" com o caminho do galho correto na Árvore 2027 (ex: <code style="background:var(--border);padding:1px 4px;border-radius:3px;font-size:11px">Geografia › Regional › Sudeste</code>).<br>
+          3. Salve e importe o arquivo aqui usando o botão acima.
+        </div>
+      </div>
+    </div>`;
+}
+
+/* TOAST */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
